@@ -6,7 +6,7 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 // middleware's
 app.use(cors());
@@ -47,6 +47,10 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+    const classCollection = client.db("summer-campDB").collection("classes");
+    const instructorCollection = client
+      .db("summer-campDB")
+      .collection("instructors");
 
     app.post("/jwt", (req, res) => {
       const email = req.body;
@@ -59,7 +63,7 @@ async function run() {
 
     // generate client secret stripe
     app.post("/create-payment-secret", verifyJWT, async (req, res) => {
-      const {price} = req.body;
+      const { price } = req.body;
       if (price) {
         const amount = parseInt(price * 100);
 
@@ -73,7 +77,18 @@ async function run() {
       }
     });
 
-    
+    // class related api
+    app.get("/classes", async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+
+    // instructor related api
+    app.get("/instructors", async (req, res) => {
+      const result = await instructorCollection.find().toArray();
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
