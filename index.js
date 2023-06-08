@@ -56,7 +56,6 @@ async function run() {
 
     app.post("/jwt", (req, res) => {
       const email = req.body;
-      console.log(email);
       const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1h",
       });
@@ -106,7 +105,8 @@ async function run() {
     });
 
     // booking related api------------------------------------------------
-    app.put("/bookings/:email", async (req, res) => {
+    // save classes to db
+    app.put("/bookings/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const cls = req.body;
       const query = { $and: [{ classId: cls.classId }, { email: email }] };
@@ -122,7 +122,21 @@ async function run() {
       res.send(result);
     });
 
-    
+    // get myClasses by email
+    app.get("/bookings/myClasses/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // delete from myClasses
+    app.delete("/bookings/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
