@@ -51,6 +51,8 @@ async function run() {
     const instructorCollection = client
       .db("summer-campDB")
       .collection("instructors");
+    const userCollection = client.db("summer-campDB").collection("users");
+    const bookingCollection = client.db("summer-campDB").collection("bookings");
 
     app.post("/jwt", (req, res) => {
       const email = req.body;
@@ -77,17 +79,50 @@ async function run() {
       }
     });
 
-    // class related api
+    // class related api--------------------------------------------------
     app.get("/classes", async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
 
-    // instructor related api
+    // instructor related api---------------------------------------------
     app.get("/instructors", async (req, res) => {
       const result = await instructorCollection.find().toArray();
       res.send(result);
     });
+
+    // user related api---------------------------------------------------
+    // save user to db
+    app.put("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const query = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await userCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
+    // booking related api------------------------------------------------
+    app.put("/bookings/:email", async (req, res) => {
+      const email = req.params.email;
+      const cls = req.body;
+      const query = { $and: [{ classId: cls.classId }, { email: email }] };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: cls,
+      };
+      const result = await bookingCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
