@@ -53,6 +53,7 @@ async function run() {
       .collection("instructors");
     const userCollection = client.db("summer-campDB").collection("users");
     const bookingCollection = client.db("summer-campDB").collection("bookings");
+    const enrollCollection = client.db("summer-campDB").collection("enrolls");
     const paymentCollection = client.db("summer-campDB").collection("payments");
 
     app.post("/jwt", (req, res) => {
@@ -153,12 +154,14 @@ async function run() {
       const deleteQuery = {
         _id: { $in: payment.bookings.map((id) => new ObjectId(id)) },
       };
+      const enrollArray = await bookingCollection.find(deleteQuery).toArray();
+      const insertEnrollArray = await enrollCollection.insertMany(enrollArray);
       const deleteResult = await bookingCollection.deleteMany(deleteQuery);
-      res.send({ insertResult, updateResult, deleteResult });
+      res.send({ insertResult, updateResult, deleteResult, insertEnrollArray });
     });
 
     // payment history
-    app.get("/payments/:email", async (req, res) => {
+    app.get("/payments/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await paymentCollection
@@ -166,6 +169,15 @@ async function run() {
         .sort({ date: -1 })
         .toArray();
 
+      res.send(result);
+    });
+
+    // enroll related api-------------------------------------------------
+    // get enroll classes by email
+    app.get("/enrolls/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await enrollCollection.find(query).toArray();
       res.send(result);
     });
 
