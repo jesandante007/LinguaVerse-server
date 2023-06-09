@@ -53,6 +53,7 @@ async function run() {
       .collection("instructors");
     const userCollection = client.db("summer-campDB").collection("users");
     const bookingCollection = client.db("summer-campDB").collection("bookings");
+    const paymentCollection = client.db("summer-campDB").collection("payments");
 
     app.post("/jwt", (req, res) => {
       const email = req.body;
@@ -136,6 +137,24 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await bookingCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // payment related api------------------------------------------------
+    // save payment info
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+      const findQuery = {
+        _id: { $in: payment.classes.map((id) => new ObjectId(id)) },
+      };
+      const updateResult = await classCollection.updateMany(findQuery, {
+        $inc: { availableSeats: -1 },
+      });
+      const deleteQuery = {
+        _id: { $in: payment.bookings.map((id) => new ObjectId(id)) },
+      };
+      const deleteResult = await bookingCollection.deleteMany(deleteQuery);
+      res.send({ insertResult, updateResult, deleteResult });
     });
 
     // Send a ping to confirm a successful connection
