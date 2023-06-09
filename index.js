@@ -92,14 +92,50 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/classes/:email", async (req, res) => {
+    app.get("/classes/:email", verifyJWT, async (req, res) => {
+      const decodedEmail = req.decoded.email;
       const email = req.params.email;
+      if (decodedEmail !== email) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
       const query = { email: email };
       const result = await classCollection.find(query).toArray();
       res.send(result);
     });
 
-    
+    app.get("/myClasses/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (decodedEmail !== email) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.patch("/myClasses/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const email = req.query.email;
+      const data = req.body;
+      const decodedEmail = req.decoded.email;
+      if (decodedEmail !== email) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: { ...data },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
     // instructor related api---------------------------------------------
     app.get("/instructors", async (req, res) => {
