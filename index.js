@@ -81,10 +81,25 @@ async function run() {
     });
 
     // class related api--------------------------------------------------
+    app.post("/classes", verifyJWT, async (req, res) => {
+      const cls = req.body;
+      const result = await classCollection.insertOne(cls);
+      res.send(result);
+    });
+
     app.get("/classes", async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
+
+    app.get("/classes/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    
 
     // instructor related api---------------------------------------------
     app.get("/instructors", async (req, res) => {
