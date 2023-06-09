@@ -141,7 +141,7 @@ async function run() {
 
     // payment related api------------------------------------------------
     // save payment info
-    app.post("/payments", async (req, res) => {
+    app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
       const findQuery = {
@@ -155,6 +155,18 @@ async function run() {
       };
       const deleteResult = await bookingCollection.deleteMany(deleteQuery);
       res.send({ insertResult, updateResult, deleteResult });
+    });
+
+    // payment history
+    app.get("/payments/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await paymentCollection
+        .find(query)
+        .sort({ date: -1 })
+        .toArray();
+
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
