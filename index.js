@@ -166,6 +166,18 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/feedbackClasses/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const {feedback} = req.body;
+      console.log(feedback);
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: { feedback: feedback },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
     // instructor related api---------------------------------------------
     app.get("/instructors", async (req, res) => {
       const result = await instructorCollection.find().toArray();
