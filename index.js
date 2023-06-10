@@ -119,6 +119,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/manageClasses", verifyJWT, async (req, res) => {
+      const query = { email: { $exists: true } };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.patch("/myClasses/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const email = req.query.email;
@@ -162,25 +168,25 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/admin/:id", verifyJWT, async(req, res) => {
-      const id = req. params.id;
-      const query = {_id: new ObjectId(id)}
+    app.patch("/users/admin/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const updateDoc = {
-        $set: {role: 'admin'}
-      }
-      const result = await userCollection.updateOne(query, updateDoc)
-      res.send(result)
-    })
+        $set: { role: "admin" },
+      };
+      const result = await userCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
-    app.patch("/users/instructor/:id", verifyJWT, async(req, res) => {
-      const id = req. params.id;
-      const query = {_id: new ObjectId(id)}
+    app.patch("/users/instructor/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const updateDoc = {
-        $set: {role: 'instructor'}
-      }
-      const result = await userCollection.updateOne(query, updateDoc)
-      res.send(result)
-    })
+        $set: { role: "instructor" },
+      };
+      const result = await userCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
     // booking related api------------------------------------------------
     // save classes to db
