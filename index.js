@@ -64,6 +64,31 @@ async function run() {
       res.send({ token });
     });
 
+    // verifyAdmin middleware
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "instructor") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
     // generate client secret stripe
     app.post("/create-payment-secret", verifyJWT, async (req, res) => {
       const { price } = req.body;
@@ -168,7 +193,7 @@ async function run() {
 
     app.patch("/feedbackClasses/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      const {feedback} = req.body;
+      const { feedback } = req.body;
       console.log(feedback);
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -200,6 +225,15 @@ async function run() {
 
     app.get("/users", verifyJWT, async (req, res) => {
       const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/users/role/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      console.log(user);
+      const result = { role: user?.role };
       res.send(result);
     });
 
