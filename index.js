@@ -312,6 +312,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/bookings/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.findOne(query);
+      res.send(result);
+    });
+
     // delete from myClasses
     app.delete("/bookings/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
@@ -338,6 +345,19 @@ async function run() {
       const insertEnrollArray = await enrollCollection.insertMany(enrollArray);
       const deleteResult = await bookingCollection.deleteMany(deleteQuery);
       res.send({ insertResult, updateResult, deleteResult, insertEnrollArray });
+    });
+
+    app.post("/singlePayments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+      const findQuery = {_id: new ObjectId(payment.classId)};
+      const updateResult = await classCollection.updateOne(findQuery, {
+        $inc: { availableSeats: -1 }});
+      const deleteQuery = {_id: new ObjectId(payment.bookingId)};
+      const enroll = await bookingCollection.findOne(deleteQuery);
+      const insertEnrollResult = await enrollCollection.insertOne(enroll);
+      const deleteResult = await bookingCollection.deleteOne(deleteQuery);
+      res.send({insertResult, updateResult, deleteResult, insertEnrollResult});
     });
 
     // payment history
