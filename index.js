@@ -88,7 +88,10 @@ async function run() {
     });
 
     app.get("/classes", async (req, res) => {
-      const result = await classCollection.find().toArray();
+      const query = {
+        $or: [{ status: "approved" }, { status: { $exists: false } }],
+      };
+      const result = await classCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -138,6 +141,26 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: { ...data },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    app.patch("/approveClasses/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: { status: "approved" },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    app.patch("/denyClasses/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: { status: "denied" },
       };
       const result = await classCollection.updateOne(query, updateDoc);
       res.send(result);
