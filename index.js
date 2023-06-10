@@ -157,6 +157,11 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users", verifyJWT, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
     // booking related api------------------------------------------------
     // save classes to db
     app.put("/bookings/:email", verifyJWT, async (req, res) => {
