@@ -192,6 +192,15 @@ async function run() {
           $set: { status: "approved" },
         };
         const result = await classCollection.updateOne(query, updateDoc);
+        const classDoc = await classCollection.findOne(query);
+        const instructor = await instructorCollection.findOne({
+          email: classDoc.email,
+        });
+        instructor.classes.push(classDoc.name);
+        const updateInstructorClasses = await instructorCollection.updateOne(
+          { email: classDoc.email },
+          { $set: { classes: instructor.classes } }
+        );
         res.send(result);
       }
     );
@@ -262,6 +271,12 @@ async function run() {
         $set: { role: "admin" },
       };
       const result = await userCollection.updateOne(query, updateDoc);
+      if (result.modifiedCount === 1) {
+        const user = await userCollection.findOne(query);
+        const deleteInstructor = await instructorCollection.deleteOne({
+          email: user.email,
+        });
+      }
       res.send(result);
     });
 
@@ -276,6 +291,18 @@ async function run() {
           $set: { role: "instructor" },
         };
         const result = await userCollection.updateOne(query, updateDoc);
+        if (result.modifiedCount === 1) {
+          const user = await userCollection.findOne(query);
+          const instructorData = {
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            classes: [],
+          };
+          const instructorInsertResult = await instructorCollection.insertOne(
+            instructorData
+          );
+        }
         res.send(result);
       }
     );
@@ -350,14 +377,20 @@ async function run() {
     app.post("/singlePayments", verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
-      const findQuery = {_id: new ObjectId(payment.classId)};
+      const findQuery = { _id: new ObjectId(payment.classId) };
       const updateResult = await classCollection.updateOne(findQuery, {
-        $inc: { availableSeats: -1 }});
-      const deleteQuery = {_id: new ObjectId(payment.bookingId)};
+        $inc: { availableSeats: -1 },
+      });
+      const deleteQuery = { _id: new ObjectId(payment.bookingId) };
       const enroll = await bookingCollection.findOne(deleteQuery);
       const insertEnrollResult = await enrollCollection.insertOne(enroll);
       const deleteResult = await bookingCollection.deleteOne(deleteQuery);
-      res.send({insertResult, updateResult, deleteResult, insertEnrollResult});
+      res.send({
+        insertResult,
+        updateResult,
+        deleteResult,
+        insertEnrollResult,
+      });
     });
 
     // payment history
